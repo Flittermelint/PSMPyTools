@@ -761,7 +761,7 @@ print(f'''
     {
         $this.EnterRawRepl()
 
-        $out = $this.Execute(($this.Python.OutMPyFile -f ($Path, $Data)))
+        $out = $this.Execute(($this.Python.OutMPyFile -f ($Path, $Data.Replace('\','\\'))))
 
         $this.ExitRawRepl()
 
