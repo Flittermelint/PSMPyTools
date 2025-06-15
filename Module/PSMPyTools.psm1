@@ -269,7 +269,7 @@ function Get-MPyFirmware
 
     if(-not $OutPath)
     {
-        [void](mkdir ($OutPath = "$($env:TEMP)\MPyFirmware"))
+        [void](mkdir ($OutPath = "$($env:TEMP)\MPyFirmware") -ErrorAction SilentlyContinue)
 
         $OutPath = "$OutPath\{0}"
     }
@@ -289,9 +289,30 @@ function Get-MPyFirmware
 
     if(Test-Path -Path $OutPath -PathType Leaf)
     {
+        if($OutPath -like "*.zip")
+        {
+            $OutItem = Get-Item -Path $OutPath
+
+            $DestinationPath = "$($OutItem.DirectoryName)\$($OutItem.BaseName)"
+
+            Write-Verbose "$($MyInvocationName): DestinationPath($($DestinationPath))"
+
+            Remove-Item -Path $DestinationPath -Recurse -ErrorAction SilentlyContinue
+
+            Expand-Archive -Path $OutPath -DestinationPath $DestinationPath
+
+            $OutPath = Get-ChildItem -Path "$DestinationPath\*.bin" -Recurse -File
+        }
+
+        Write-Verbose "$($MyInvocationName): OutPath($($OutPath))"
+
         if($InputObject.Uri)
         {
             $InputObject | Add-Member -MemberType NoteProperty -Name Path -Value $OutPath -Force -PassThru
+        }
+        else
+        {
+            $OutPath
         }
     }
 }
@@ -369,7 +390,7 @@ function Install-MPyFirmware
     [CmdletBinding()]
     param(
         [Parameter(Mandatory,ValueFromPipeline,ValueFromPipelineByPropertyName)]               [string]$Path, # [Alias("FullName")]
-        [Parameter(                            ValueFromPipelineByPropertyName)][Alias("Port")]    [string]$PortName
+        [Parameter(                            ValueFromPipelineByPropertyName)][Alias("Port")][string]$PortName
     )
 
     $MyInvocationName = $MyInvocation.MyCommand.Name
